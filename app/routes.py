@@ -67,6 +67,6 @@ def get_data():
     
     try:
         r = request.get_json()
-        return 'We did it!', 200
+        return r, 200
     except:
         return 'Sad face :(', 400
