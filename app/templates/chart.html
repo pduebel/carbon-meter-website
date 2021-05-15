@@ -1,0 +1,78 @@
+<html>
+  <head>
+    <!--Load the AJAX API-->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+
+      // Load the Visualization API and the corechart package.
+      google.charts.load('current', {'packages':['controls', 'corechart']});
+      
+      change("day")
+      
+      function change(range) {
+      // Set a callback to run when the Google Visualization API is loaded.
+      google.charts.setOnLoadCallback(drawChart);
+
+      // Callback that creates and populates a data table,
+      // instantiates the pie chart, passes in the data and
+      // draws it.
+      function drawChart() {
+        
+        if (range == "day"){
+          // Create the data table.
+          var data = new google.visualization.DataTable({{ day_json | safe }});
+        } else if (range == "week"){
+          var data = new google.visualization.DataTable({{ week_json | safe }});
+        } else if (range == "month"){
+          var data = new google.visualization.DataTable({{ month_json | safe }});
+        };
+
+        // Set chart options
+        var options = {'title':'kWh'};
+
+        // Instantiate and draw our chart, passing in some options.
+        var chart = new google.visualization.ChartWrapper({
+          chartType: 'AreaChart',
+          containerId: 'chart-area',
+          dataTable: data,
+          options: {
+            height: 280,
+            legend: {
+              alignment: 'end',
+              position: 'top'
+            },
+            animation: {
+              duration: 500,
+              easing: 'in',
+              startup: true
+            },
+            chartArea: {
+              height: '100%',
+              width: '100%',
+              top: 36,
+              left: 36,
+              right: 18,
+              bottom: 36
+            }
+          }
+        });
+        chart.draw();
+      };
+    };
+    </script>
+  </head>
+
+  <body>
+    <!--Div that will hold the pie chart-->
+    <div id="dashboard">
+      <div id="range-buttons">
+        <button class="ui-button ui-widget ui-corner-all" onclick="change('day')">1D</button>
+        <button class="ui-button ui-widget ui-corner-all"onclick="change('week')">7D</button>
+        <button class="ui-button ui-widget ui-corner-all"onclick="change('month')">30D</button>
+      </div>
+      <div id="chart-area"></div>
+      <div id="filter-range"></div>
+    </div>
+  </body>
+</html>
