@@ -66,7 +66,7 @@ def index():
 @app.route('/data-upload', methods=['POST'])
 def get_data():
     try:
-        r = request.form
+        r = request.get_json()
         return f'{r}', 200
     except:
         return 'Sad face :(', 400
