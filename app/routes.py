@@ -1,5 +1,6 @@
 import sqlite3
 import datetime
+import pickle
 
 import pandas as pd
 from flask import render_template, request, send_file
@@ -67,7 +68,14 @@ def get_data():
     
     try:
         r = request.get_json()
-        df = pd.read_json(r)
+        with open('r.pkl', 'wb') as file:
+            pickle.dump(r, file)
         return 'We did it!', 200
     except:
         return 'Sad face :(', 400
+
+@app.route('/data')
+def display_data():
+    with open('r.pkl', 'rb') as file:
+        r = pickle.load(file)
+    return r
