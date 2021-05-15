@@ -65,12 +65,8 @@ def index():
 @app.route('/data-upload', methods=['POST'])
 def get_data():
     
-    r = request.get_json()
-
     try:
-        df = pd.read_json(r)
-        return 'Got it thanks...', 200
-
+        r = request.get_json()
+        return 'We did it!', 200
     except:
-        print('rejected - unable to save data to sql')
-        return 'Bad Request', 400
+        return 'Sad face :(', 400
