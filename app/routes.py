@@ -65,17 +65,8 @@ def index():
 
 @app.route('/data-upload', methods=['POST'])
 def get_data():
-    
     try:
         r = request.get_json()
-        with open('r.pkl', 'wb') as file:
-            pickle.dump(r, file)
-        return 'We did it!', 200
+        return f'{r}', 200
     except:
         return 'Sad face :(', 400
-
-@app.route('/data')
-def display_data():
-    with open('r.pkl', 'rb') as file:
-        r = pickle.load(file)
-    return r
