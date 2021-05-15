@@ -12,10 +12,5 @@ json = df.to_json()
 # %%
 json_df = pd.read_json(json)
 # %%
-headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:66.0) Gecko/20100101 Firefox/66.0",
-    "Accept-Encoding": "*",
-    "Connection": "keep-alive"
-}
-r = requests.post('https://carbon-meter.herokuapp.com/data-upload', data=json, headers=headers)
+r = requests.post('https://localhost:5000/data-upload', data=json)
 print(r)

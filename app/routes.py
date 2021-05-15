@@ -67,6 +67,7 @@ def get_data():
     
     try:
         r = request.get_json()
+        df = pd.read_json(r)
         return 'We did it!', 200
     except:
         return 'Sad face :(', 400
