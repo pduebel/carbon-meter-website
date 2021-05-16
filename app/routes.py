@@ -10,7 +10,7 @@ from app import app
 
 @app.route('/')
 def index():
-    conn = sqlite3.connect('processed_test.db')
+    conn = sqlite3.connect('energy.db')
     df = pd.read_sql('SELECT * FROM energy', con=conn)
     df['timestamp'] = pd.to_datetime(df['timestamp'])
     
@@ -69,7 +69,7 @@ def get_data():
         r = request.get_json()
         df = pd.read_json(r, convert_dates=False)
         df.set_index('timestamp', inplace=True)
-        conn = sqlite3.connect('processed_test.db')
+        conn = sqlite3.connect('energy.db')
         df.to_sql('temp_table', con=conn, if_exists='replace')
         c = conn.cursor()
         c.execute('REPLACE INTO energy SELECT * FROM temp_table')
