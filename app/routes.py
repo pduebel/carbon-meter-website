@@ -67,6 +67,7 @@ def index():
 def get_data():
     try:
         r = request.get_json()
-        return f'{r}', 200
+        df = pd.read_json(r)
+        return f'{df}', 200
     except:
         return 'Sad face :(', 400
