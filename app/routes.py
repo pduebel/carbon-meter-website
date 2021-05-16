@@ -10,9 +10,8 @@ from app import app
 
 @app.route('/')
 def index():
-    conn = sqlite3.connect('processed_test.db')
+    conn = sqlite3.connect('energy.db')
     df = pd.read_sql('SELECT * FROM energy', con=conn)
-    df['timestamp'] = pd.to_datetime(df['timestamp'], format='%Y%m%d%H%M')
     
     day_timestamp = df['timestamp'].max() - datetime.timedelta(hours=24)
     day_df = df[df['timestamp'] >= day_timestamp].copy()
@@ -67,9 +66,9 @@ def index():
 def get_data():
     try:
         r = request.get_json()
-        df = pd.read_json(r, convert_dates=False)
+        df = pd.read_json(r)
         df.set_index('timestamp', inplace=True)
-        conn = sqlite3.connect('processed_test.db')
+        conn = sqlite3.connect('energy.db')
         df.to_sql('temp_table', con=conn, if_exists='replace')
         c = conn.cursor()
         c.execute('REPLACE INTO energy SELECT * FROM temp_table')
