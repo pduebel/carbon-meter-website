@@ -68,6 +68,12 @@ def get_data():
     try:
         r = request.get_json()
         df = pd.read_json(r)
-        return f'{df}', 200
+        conn = sqlite3.connect('processed_test.db')
+        df.to_sql('temp_table', con=conn, if_exists='replace')
+        c = conn.cursor()
+        c.execute('REPLACE INTO energy SELECT * FROM temp_table')
+        conn.commit()
+        conn.close()
+        return 'We did it!', 200
     except:
         return 'Sad face :(', 400
