@@ -68,6 +68,7 @@ def get_data():
     try:
         r = request.get_json()
         df = pd.read_json(r)
+        df.set_index('timestamp', inplace=True)
         conn = sqlite3.connect('processed_test.db')
         df.to_sql('temp_table', con=conn, if_exists='replace')
         c = conn.cursor()
