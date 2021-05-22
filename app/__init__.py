@@ -12,6 +12,10 @@ c.execute('''CREATE TABLE IF NOT EXISTS energy (
                  kWh FLOAT,
                  kW FLOAT
                  );''')
+c.execute('''CREATE TABLE IF NOT EXISTS kW (
+                 id INTEGER PRIMARY KEY,
+                 kW FLOAT
+                 );''')
 conn.commit()
 conn.close()
 
