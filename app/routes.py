@@ -81,14 +81,11 @@ def get_data():
 
 @app.route('/kW-upload', methods=['POST'])
 def get_kW():
-    try:
-        kW = request.form['kW']
-        id = 1
-        conn = sqlite3.connect('energy.db')
-        c = conn.cursor()
-        c.execute(f'REPLACE INTO kW (id, kW) VALUES ({id}, {kW})')
-        conn.commit()
-        conn.close()
-        return 'We did it!', 200
-    except:
-        return 'Sad face :(', 400 
+    kW = request.form['kW']
+    id = 1
+    conn = sqlite3.connect('energy.db')
+    c = conn.cursor()
+    c.execute(f'REPLACE INTO kW (id, kW) VALUES ({id}, {kW})')
+    conn.commit()
+    conn.close()
+    return 'We did it!', 200
