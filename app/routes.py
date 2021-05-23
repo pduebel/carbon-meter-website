@@ -58,10 +58,17 @@ def index():
     month_data_table = gviz_api.DataTable(description)
     month_data_table.LoadData(month_graph_df.values)
     month_json = month_data_table.ToJSon()
+    
+    try:
+        c = conn.cursor()
+        query = c.execute('SELECT kW FROM kW WHERE id=1')
+        kW = query.fetchone()[0]
+    except:
+        kW = 'N/A'
 
     conn.close()
 
-    return render_template('chart.html', day_json=day_json, week_json=week_json, month_json=month_json)
+    return render_template('chart.html', day_json=day_json, week_json=week_json, month_json=month_json, kW=kW)
 
 @app.route('/data-upload', methods=['POST'])
 def get_data():
