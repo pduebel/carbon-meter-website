@@ -11,6 +11,13 @@ from app import app
 @app.route('/')
 def index():
     conn = sqlite3.connect('energy.db')
+    query_day = '''
+        SELECT
+          timestamp,
+          (julianday(SELECT MAX(timestamp)
+           FROM energy) - julianday(timestamp)) * 24 * 60
+        FROM energy
+    '''
     df = pd.read_sql('SELECT * FROM energy', con=conn)
     df['timestamp'] = pd.to_datetime(df['timestamp'])
     
