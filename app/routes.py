@@ -11,15 +11,27 @@ from app import app
 @app.route('/')
 def index():
     conn = sqlite3.connect('energy.db')
-    query_day = '''
-        SELECT
-          timestamp,
-          (julianday(SELECT MAX(timestamp)
-           FROM energy) - julianday(timestamp)) * 24 * 60
-        FROM energy
-    '''
-    df = pd.read_sql('SELECT * FROM energy', con=conn)
-    df['timestamp'] = pd.to_datetime(df['timestamp'])
+    query_dict = {}
+    days_dict = {'day': 1,
+                 'week': 7,
+                 'month': 30}
+    for period, days in days_dict.items():
+        query_dict[period] = f'''
+            SELECT
+              timestamp,
+              kWh
+            FROM energy
+            WHERE (
+                (
+                    SELECT MAX(JULIANDAY(timestamp)) 
+                    FROM energy
+                ) - JULIANDAY(timestamp)
+            ) <= {days}
+        '''
+
+    day_graph_df = pd.read_sql_query(query_dict['day'], con=conn)
+    day_graph_df['timestamp'] = pd.to_datetime(day_graph_df['timestamp'])
+    '''df['timestamp'] = pd.to_datetime(df['timestamp'])
     
     day_timestamp = df['timestamp'].max() - datetime.timedelta(hours=24)
     day_df = df[df['timestamp'] >= day_timestamp].copy()
@@ -28,8 +40,13 @@ def index():
     grouped_day_df['min_diff'] = grouped_day_df['timestamp'].diff().dt.total_seconds().div(60)
     grouped_day_df['min_diff'] = grouped_day_df['min_diff'].fillna(1).astype(int)
     grouped_day_df['diff'] = grouped_day_df['kWh_diff'] / grouped_day_df['min_diff']
-    day_graph_df = grouped_day_df[['timestamp', 'diff']]
-
+    
+    df.rename(columns={'kWh': 'diff'}, inplace=True)
+    day_graph_df = df[['timestamp', 'diff']]'''
+    
+    week_graph_df = pd.read_sql_query(query_dict['week'], con=conn)
+    week_graph_df['timestamp'] = pd.to_datetime(week_graph_df['timestamp'])
+    '''
     week_timestamp = df['timestamp'].max() - datetime.timedelta(days=7)
     week_df = df[df['timestamp'] >= week_timestamp].copy()
     grouped_week_df = week_df.groupby(week_df['timestamp'].dt.floor('H'))['kWh'].max().reset_index()
@@ -37,16 +54,16 @@ def index():
     grouped_week_df['hour_diff'] = grouped_week_df['timestamp'].diff().dt.total_seconds().div(60 * 60)
     grouped_week_df['hour_diff'] = grouped_week_df['hour_diff'].fillna(1).astype(int)
     grouped_week_df['diff'] = grouped_week_df['kWh_diff'] / grouped_week_df['hour_diff']
-    week_graph_df = grouped_week_df[['timestamp', 'diff']]
+    week_graph_df = grouped_week_df[['timestamp', 'diff']]'''
 
-    month_timestamp = df['timestamp'].max() - datetime.timedelta(days=30)
+    '''month_timestamp = df['timestamp'].max() - datetime.timedelta(days=30)
     month_df = df[df['timestamp'] >= month_timestamp].copy()
     grouped_month_df = month_df.groupby(month_df['timestamp'].dt.floor('D'))['kWh'].max().reset_index()
     grouped_month_df['kWh_diff'] = grouped_month_df['kWh'].diff()
     grouped_month_df['day_diff'] = grouped_month_df['timestamp'].diff().dt.total_seconds().div(60 * 60 * 24)
     grouped_month_df['day_diff'] = grouped_month_df['day_diff'].fillna(1).astype(int)
     grouped_month_df['diff'] = grouped_month_df['kWh_diff'] / grouped_month_df['day_diff']
-    month_graph_df = grouped_month_df[['timestamp', 'diff']]
+    month_graph_df = grouped_month_df[['timestamp', 'diff']]'''
 
     description = [('timestamp', 'datetime', 'Time stamp'),
                    #('battery', 'number', 'Battery'),
@@ -62,9 +79,9 @@ def index():
     week_data_table.LoadData(week_graph_df.values)
     week_json = week_data_table.ToJSon()
 
-    month_data_table = gviz_api.DataTable(description)
+    '''month_data_table = gviz_api.DataTable(description)
     month_data_table.LoadData(month_graph_df.values)
-    month_json = month_data_table.ToJSon()
+    month_json = month_data_table.ToJSon()'''
     
     try:
         c = conn.cursor()
@@ -75,7 +92,7 @@ def index():
 
     conn.close()
 
-    return render_template('chart.html', day_json=day_json, week_json=week_json, month_json=month_json, kW=kW)
+    return render_template('chart.html', day_json=day_json, kW=kW, week_json=week_json)#, month_json=month_json, )
 
 @app.route('/data-upload', methods=['POST'])
 def get_data():
