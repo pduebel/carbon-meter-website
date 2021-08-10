@@ -19,7 +19,8 @@ def index():
         query_dict[period] = f'''
             SELECT
               timestamp,
-              kWh
+              kWh,
+              carbon
             FROM energy
             WHERE (
                 (
@@ -55,7 +56,9 @@ def index():
     grouped_week_df['hour_diff'] = grouped_week_df['hour_diff'].fillna(1).astype(int)
     grouped_week_df['diff'] = grouped_week_df['kWh_diff'] / grouped_week_df['hour_diff']
     week_graph_df = grouped_week_df[['timestamp', 'diff']]'''
-
+    
+    month_graph_df = pd.read_sql_query(query_dict['month'], con=conn)
+    month_graph_df['timestamp'] = pd.to_datetime(month_graph_df['timestamp'])
     '''month_timestamp = df['timestamp'].max() - datetime.timedelta(days=30)
     month_df = df[df['timestamp'] >= month_timestamp].copy()
     grouped_month_df = month_df.groupby(month_df['timestamp'].dt.floor('D'))['kWh'].max().reset_index()
@@ -68,8 +71,8 @@ def index():
     description = [('timestamp', 'datetime', 'Time stamp'),
                    #('battery', 'number', 'Battery'),
                    #('kWh', 'number', 'Total kWh'),
-                   #('kW', 'number', 'kW'),
-                   ('diff', 'number', 'kWh')]
+                   ('kWh', 'number', 'kWh'),
+                   ('carbon', 'number', 'Carbon')]
 
     day_data_table = gviz_api.DataTable(description)
     day_data_table.LoadData(day_graph_df.values)
@@ -79,9 +82,9 @@ def index():
     week_data_table.LoadData(week_graph_df.values)
     week_json = week_data_table.ToJSon()
 
-    '''month_data_table = gviz_api.DataTable(description)
+    month_data_table = gviz_api.DataTable(description)
     month_data_table.LoadData(month_graph_df.values)
-    month_json = month_data_table.ToJSon()'''
+    month_json = month_data_table.ToJSon()
     
     try:
         c = conn.cursor()
@@ -92,7 +95,7 @@ def index():
 
     conn.close()
 
-    return render_template('chart.html', day_json=day_json, kW=kW, week_json=week_json)#, month_json=month_json, )
+    return render_template('chart.html', day_json=day_json, kW=kW, week_json=week_json, month_json=month_json)
 
 @app.route('/data-upload', methods=['POST'])
 def get_data():
