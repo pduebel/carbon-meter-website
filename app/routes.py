@@ -30,7 +30,23 @@ def index():
                 ) - JULIANDAY(timestamp)
             ) <= {days}
         '''
-    query = 'SELECT (JULIANDAY(timestamp) * 24 * 60) - ((JULIANDAY(timestamp) * 24 * 60) % 5), timestamp  FROM energy'
+    query = '''
+        SELECT
+          timestamp_floor,
+          SUM(kWh),
+          SUM(carbon)
+        FROM (
+            SELECT 
+              DATETIME(
+                  STRFTIME("%s", timestamp) - (STRFTIME("%s", timestamp) % (5 * 60)), 
+                  "unixepoch"
+              ) AS timestamp_floor,
+              kWh,
+              carbon
+            FROM energy
+        )
+        GROUP BY timestamp_floor
+    '''
 
     day_graph_df = pd.read_sql_query(query_dict['day'], con=conn)
     day_graph_df['timestamp'] = pd.to_datetime(day_graph_df['timestamp'])
