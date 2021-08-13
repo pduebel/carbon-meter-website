@@ -11,6 +11,7 @@ from app import app
 @app.route('/')
 def index():
     conn = sqlite3.connect('energy.db')
+    cur = conn.cursor()
     query_dict = {}
     days_dict = {'day': 1,
                  'week': 7,
@@ -29,6 +30,7 @@ def index():
                 ) - JULIANDAY(timestamp)
             ) <= {days}
         '''
+    query = 'SELECT (JULIANDAY(timestamp) * 24 * 60) - ((JULIANDAY(timestamp) * 24 * 60) % 5), timestamp  FROM energy'
 
     day_graph_df = pd.read_sql_query(query_dict['day'], con=conn)
     day_graph_df['timestamp'] = pd.to_datetime(day_graph_df['timestamp'])
@@ -85,17 +87,40 @@ def index():
     month_data_table = gviz_api.DataTable(description)
     month_data_table.LoadData(month_graph_df.values)
     month_json = month_data_table.ToJSon()
+     
+    carbon_query = '''
+        SELECT 
+          carbon_intensity,
+          intensity_index
+        FROM energy
+        WHERE timestamp = (
+            SELECT MAX(timestamp)
+            FROM energy
+        )
+    '''
+    carbon_data =  cur.execute(carbon_query).fetchone()
+    carbon_intensity = carbon_data[0]
+    intensity_index = carbon_data[1]
     
     try:
-        c = conn.cursor()
-        query = c.execute('SELECT kW FROM kW WHERE id=1')
-        kW = query.fetchone()[0]
+        kw_query = '''
+            SELECT kW
+            FROM kW
+            WHERE id=1
+        '''
+        kW = cur.execute(kw_query).fetchone()[0]
     except:
         kW = 'N/A'
 
     conn.close()
 
-    return render_template('chart.html', day_json=day_json, kW=kW, week_json=week_json, month_json=month_json)
+    return render_template('chart.html', 
+                           day_json=day_json, 
+                           week_json=week_json, 
+                           month_json=month_json, 
+                           kW=kW,
+                           carbon_intensity=carbon_intensity,
+                           intensity_index=intensity_index)
 
 @app.route('/data-upload', methods=['POST'])
 def get_data():

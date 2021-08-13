@@ -33,8 +33,8 @@
 
         // Instantiate and draw our chart, passing in some options.
         var chart = new google.visualization.ChartWrapper({
-          chartType: 'AreaChart',
-          containerId: 'chart-area',
+          chartType: 'LineChart',
+          containerId: 'chart-line',
           dataTable: data,
           options: {
             height: 280,
@@ -47,19 +47,11 @@
               easing: 'in',
               startup: true
             },
-            chartArea: {
-              height: '100%',
-              width: '100%',
-              top: 36,
-              left: 36,
-              right: 18,
-              bottom: 36
-            },
             vAxes: [{
               title: 'Power Used (kWh)'
             },
             {
-              title:'Carbon Produced (g of CO2)'
+              title:'Carbon Produced (g of CO2)',
             }
             ],
             series: {
@@ -86,9 +78,10 @@
         <button class="ui-button ui-widget ui-corner-all"onclick="change('week')">7D</button>
         <button class="ui-button ui-widget ui-corner-all"onclick="change('month')">30D</button>
       </div>
-      <div id="chart-area"></div>
+      <div id="chart-line"></div>
       <div id="filter-range"></div>
     </div>
     <p>Current usage: {{ kW }} kW</p>
+    <p>Current carbon instensity: {{ carbon_intensity }} gCO2/kWh ({{ intensity_index }})</p>
   </body>
 </html>
