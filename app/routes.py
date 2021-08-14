@@ -13,43 +13,36 @@ def index():
     conn = sqlite3.connect('energy.db')
     cur = conn.cursor()
     query_dict = {}
-    days_dict = {'day': 1,
-                 'week': 7,
-                 'month': 30}
-    for period, days in days_dict.items():
+    days_dict = {'day': [1, 5],
+                 'week': [7, 60],
+                 'month': [30, 1440]}
+    for period, period_list in days_dict.items():
         query_dict[period] = f'''
             SELECT
-              timestamp,
-              kWh,
-              carbon
-            FROM energy
-            WHERE (
-                (
-                    SELECT MAX(JULIANDAY(timestamp)) 
-                    FROM energy
-                ) - JULIANDAY(timestamp)
-            ) <= {days}
+              timestamp_floor,
+              SUM(kWh),
+              SUM(carbon)
+            FROM (
+                SELECT 
+                  DATETIME(
+                      STRFTIME("%s", timestamp) - (STRFTIME("%s", timestamp) % ({period_list[1]} * 60)), 
+                      "unixepoch"
+                  ) AS timestamp_floor,
+                  kWh,
+                  carbon
+                FROM energy
+                WHERE (
+                    (
+                        SELECT MAX(JULIANDAY(timestamp)) 
+                        FROM energy
+                    ) - JULIANDAY(timestamp)
+                ) <= {period_list[0]}
+            )
+            GROUP BY timestamp_floor
         '''
-    query = '''
-        SELECT
-          timestamp_floor,
-          SUM(kWh),
-          SUM(carbon)
-        FROM (
-            SELECT 
-              DATETIME(
-                  STRFTIME("%s", timestamp) - (STRFTIME("%s", timestamp) % (5 * 60)), 
-                  "unixepoch"
-              ) AS timestamp_floor,
-              kWh,
-              carbon
-            FROM energy
-        )
-        GROUP BY timestamp_floor
-    '''
 
     day_graph_df = pd.read_sql_query(query_dict['day'], con=conn)
-    day_graph_df['timestamp'] = pd.to_datetime(day_graph_df['timestamp'])
+    day_graph_df['timestamp_floor'] = pd.to_datetime(day_graph_df['timestamp_floor'])
     '''df['timestamp'] = pd.to_datetime(df['timestamp'])
     
     day_timestamp = df['timestamp'].max() - datetime.timedelta(hours=24)
@@ -64,7 +57,7 @@ def index():
     day_graph_df = df[['timestamp', 'diff']]'''
     
     week_graph_df = pd.read_sql_query(query_dict['week'], con=conn)
-    week_graph_df['timestamp'] = pd.to_datetime(week_graph_df['timestamp'])
+    week_graph_df['timestamp_floor'] = pd.to_datetime(week_graph_df['timestamp_floor'])
     '''
     week_timestamp = df['timestamp'].max() - datetime.timedelta(days=7)
     week_df = df[df['timestamp'] >= week_timestamp].copy()
@@ -76,7 +69,7 @@ def index():
     week_graph_df = grouped_week_df[['timestamp', 'diff']]'''
     
     month_graph_df = pd.read_sql_query(query_dict['month'], con=conn)
-    month_graph_df['timestamp'] = pd.to_datetime(month_graph_df['timestamp'])
+    month_graph_df['timestamp_floor'] = pd.to_datetime(month_graph_df['timestamp_floor'])
     '''month_timestamp = df['timestamp'].max() - datetime.timedelta(days=30)
     month_df = df[df['timestamp'] >= month_timestamp].copy()
     grouped_month_df = month_df.groupby(month_df['timestamp'].dt.floor('D'))['kWh'].max().reset_index()
@@ -86,7 +79,7 @@ def index():
     grouped_month_df['diff'] = grouped_month_df['kWh_diff'] / grouped_month_df['day_diff']
     month_graph_df = grouped_month_df[['timestamp', 'diff']]'''
 
-    description = [('timestamp', 'datetime', 'Time stamp'),
+    description = [('timestamp_floor', 'datetime', 'Time stamp'),
                    #('battery', 'number', 'Battery'),
                    #('kWh', 'number', 'Total kWh'),
                    ('kWh', 'number', 'kWh'),
