@@ -40,9 +40,12 @@ def index():
             )
             GROUP BY timestamp_floor
         '''
-
-    day_graph_df = pd.read_sql_query(query_dict['day'], con=conn)
-    day_graph_df['timestamp_floor'] = pd.to_datetime(day_graph_df['timestamp_floor'])
+    
+    try:
+        day_graph_df = pd.read_sql_query(query_dict['day'], con=conn)
+        day_graph_df['timestamp_floor'] = pd.to_datetime(day_graph_df['timestamp_floor'])
+    except:
+        day_graph_df = pd.DataFrame()
     '''df['timestamp'] = pd.to_datetime(df['timestamp'])
     
     day_timestamp = df['timestamp'].max() - datetime.timedelta(hours=24)
@@ -56,8 +59,11 @@ def index():
     df.rename(columns={'kWh': 'diff'}, inplace=True)
     day_graph_df = df[['timestamp', 'diff']]'''
     
-    week_graph_df = pd.read_sql_query(query_dict['week'], con=conn)
-    week_graph_df['timestamp_floor'] = pd.to_datetime(week_graph_df['timestamp_floor'])
+    try:
+        week_graph_df = pd.read_sql_query(query_dict['week'], con=conn)
+        week_graph_df['timestamp_floor'] = pd.to_datetime(week_graph_df['timestamp_floor'])
+    except:
+        week_graph_df = pd.DataFrame()
     '''
     week_timestamp = df['timestamp'].max() - datetime.timedelta(days=7)
     week_df = df[df['timestamp'] >= week_timestamp].copy()
@@ -68,8 +74,11 @@ def index():
     grouped_week_df['diff'] = grouped_week_df['kWh_diff'] / grouped_week_df['hour_diff']
     week_graph_df = grouped_week_df[['timestamp', 'diff']]'''
     
-    month_graph_df = pd.read_sql_query(query_dict['month'], con=conn)
-    month_graph_df['timestamp_floor'] = pd.to_datetime(month_graph_df['timestamp_floor'])
+    try:
+        month_graph_df = pd.read_sql_query(query_dict['month'], con=conn)
+        month_graph_df['timestamp_floor'] = pd.to_datetime(month_graph_df['timestamp_floor'])
+    except:
+        month_graph_df = pd.DataFrame()
     '''month_timestamp = df['timestamp'].max() - datetime.timedelta(days=30)
     month_df = df[df['timestamp'] >= month_timestamp].copy()
     grouped_month_df = month_df.groupby(month_df['timestamp'].dt.floor('D'))['kWh'].max().reset_index()
@@ -107,9 +116,13 @@ def index():
             FROM energy
         )
     '''
-    carbon_data =  cur.execute(carbon_query).fetchone()
-    carbon_intensity = carbon_data[0]
-    intensity_index = carbon_data[1]
+    try:
+        carbon_data =  cur.execute(carbon_query).fetchone()
+        carbon_intensity = carbon_data[0]
+        intensity_index = carbon_data[1]
+    except:
+        carbon_intensity = 'N/A'
+        intensity_index = 'N/A'
     
     try:
         kw_query = '''
