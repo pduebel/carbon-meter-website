@@ -153,6 +153,7 @@ def get_data():
         conn = sqlite3.connect('energy.db')
         df.to_sql('temp_table', con=conn, if_exists='replace')
         c = conn.cursor()
+        c.execute('CREATE TABLE IF NOT EXISTS energy AS SELECT * FROM temp_table')
         c.execute('REPLACE INTO energy SELECT * FROM temp_table')
         conn.commit()
         conn.close()
