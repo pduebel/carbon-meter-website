@@ -158,8 +158,8 @@ def get_data():
         conn.commit()
         conn.close()
         return 'We did it!', 200
-    except:
-        return 'Sad face :(', 400
+    except Exception as e:
+        return e, 400
 
 @app.route('/kW-upload', methods=['POST'])
 def get_kW():
