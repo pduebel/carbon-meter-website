@@ -18,14 +18,20 @@
       // instantiates the pie chart, passes in the data and
       // draws it.
       function drawChart() {
-        
+
         if (range == "day"){
           // Create the data table.
           var data = new google.visualization.DataTable({{ day_json | safe }});
+          document.getElementById('total-kwh').innerHTML = {{ day_totals[0] }};
+          document.getElementById('total-carbon').innerHTML = {{ day_totals[1] }};
         } else if (range == "week"){
           var data = new google.visualization.DataTable({{ week_json | safe }});
+          document.getElementById('total-kwh').innerHTML = {{ week_totals[0] }};
+          document.getElementById('total-carbon').innerHTML = {{ week_totals[1] }};
         } else if (range == "month"){
           var data = new google.visualization.DataTable({{ month_json | safe }});
+          document.getElementById('total-kwh').innerHTML = {{ month_totals[0] }};
+          document.getElementById('total-carbon').innerHTML = {{ month_totals[1] }};
         };
 
         // Set chart options
@@ -81,7 +87,9 @@
       <div id="chart-line"></div>
       <div id="filter-range"></div>
     </div>
+    <p>Total power usage: <span id='total-kwh'></span> kWh</p>
+    <p>Total carbon produced: <span id='total-carbon'></span> gCO2</p>
     <p>Current usage: {{ kW }} kW</p>
-    <p>Current carbon instensity: {{ carbon_intensity }} gCO2/kWh ({{ intensity_index }})</p>
+    <p>Current carbon instensity: {{ carbon_data[0] }} gCO2/kWh ({{ carbon_data[1] }})</p>
   </body>
 </html>
