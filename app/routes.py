@@ -43,8 +43,8 @@ def index():
         '''
         total_dict[period] = f'''
             SELECT
-              SUM(kWh),
-              SUM(carbon)
+              ROUND(SUM(kWh), 2),
+              ROUND(SUM(carbon), 2)
             FROM energy
             WHERE (
                     (
