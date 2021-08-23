@@ -3,7 +3,7 @@ import datetime
 import pickle
 
 import pandas as pd
-from flask import render_template, request, send_file
+from flask import render_template, request
 import gviz_api
 
 from app import app
@@ -13,10 +13,11 @@ def index():
     conn = sqlite3.connect('energy.db')
     cur = conn.cursor()
     query_dict = {}
-    total_dict = {}
+    total_query_dict = {}
     days_dict = {'day': [1, 5],
                  'week': [7, 60],
-                 'month': [30, 1440]}
+                 'month': [30, 1440],
+                 'year': [365, 1440]}
     for period, period_list in days_dict.items():
         query_dict[period] = f'''
             SELECT
@@ -41,7 +42,7 @@ def index():
             )
             GROUP BY timestamp_floor
         '''
-        total_dict[period] = f'''
+        total_query_dict[period] = f'''
             SELECT
               ROUND(SUM(kWh), 2),
               ROUND(SUM(carbon), 2)
@@ -54,45 +55,25 @@ def index():
                 ) <= {period_list[0]}
         '''
     
-    try:
-        day_graph_df = pd.read_sql_query(query_dict['day'], con=conn)
-        day_graph_df['timestamp_floor'] = pd.to_datetime(day_graph_df['timestamp_floor'])
-        day_totals = cur.execute(total_dict['day']).fetchone()
-    except:
-        day_graph_df = pd.DataFrame()
-        day_totals = ['N/A', 'N/A']
-    
-    try:
-        week_graph_df = pd.read_sql_query(query_dict['week'], con=conn)
-        week_graph_df['timestamp_floor'] = pd.to_datetime(week_graph_df['timestamp_floor'])
-        week_totals = cur.execute(total_dict['week']).fetchone()
-    except:
-        week_graph_df = pd.DataFrame()
-        week_totals = ['N/A', 'N/A']
-    
-    try:
-        month_graph_df = pd.read_sql_query(query_dict['month'], con=conn)
-        month_graph_df['timestamp_floor'] = pd.to_datetime(month_graph_df['timestamp_floor'])
-        month_totals = cur.execute(total_dict['month']).fetchone()
-    except:
-        month_graph_df = pd.DataFrame()
-        month_totals = ['N/A', 'N/A']
-
+    graph_df_dict ={}
+    totals_dict  ={}
+    data_table_dict = {}
+    json_dict = {}
     description = [('timestamp_floor', 'datetime', 'Time stamp'),
                    ('kWh', 'number', 'kWh'),
                    ('carbon', 'number', 'Carbon')]
-
-    day_data_table = gviz_api.DataTable(description)
-    day_data_table.LoadData(day_graph_df.values)
-    day_json = day_data_table.ToJSon()
-
-    week_data_table = gviz_api.DataTable(description)
-    week_data_table.LoadData(week_graph_df.values)
-    week_json = week_data_table.ToJSon()
-
-    month_data_table = gviz_api.DataTable(description)
-    month_data_table.LoadData(month_graph_df.values)
-    month_json = month_data_table.ToJSon()
+    for period, query in query_dict.items(): 
+        try:
+            graph_df_dict[period] = pd.read_sql_query(query, con=conn)
+            graph_df_dict[period]['timestamp_floor'] = pd.to_datetime(graph_df_dict[period]['timestamp_floor'])
+            totals_dict[period] = cur.execute(total_query_dict[period]).fetchone()
+        except:
+            graph_df_dict[period] = pd.DataFrame()
+            totals_dict[period] = ['N/A', 'N/A']
+            
+        data_table_dict[period] = gviz_api.DataTable(description)
+        data_table_dict[period].LoadData(graph_df_dict[period].values)
+        json_dict[period] = data_table_dict[period].ToJSon()
      
     carbon_query = '''
         SELECT 
@@ -122,14 +103,16 @@ def index():
     conn.close()
 
     return render_template('chart.html', 
-                           day_json=day_json, 
-                           week_json=week_json, 
-                           month_json=month_json, 
+                           day_json=json_dict['day'], 
+                           week_json=json_dict['week'], 
+                           month_json=json_dict['month'],
+                           year_json=json_dict['year'],
                            kW=kW,
                            carbon_data=carbon_data,
-                           day_totals=day_totals,
-                           week_totals=week_totals,
-                           month_totals=month_totals)
+                           day_totals=totals_dict['day'],
+                           week_totals=totals_dict['week'],
+                           month_totals=totals_dict['month'],
+                           year_totals=totals_dict['year'])
 
 @app.route('/data-upload', methods=['POST'])
 def get_data():
