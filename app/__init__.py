@@ -1,8 +1,10 @@
 import sqlite3
 
 from flask import Flask
+from flask_httpauth import HTTPBasicAuth
 
 app = Flask(__name__)
+auth = HTTPBasicAuth()
 
 conn = sqlite3.connect('energy.db')
 c = conn.cursor()

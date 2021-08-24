@@ -5,10 +5,18 @@ import pickle
 import pandas as pd
 from flask import render_template, request
 import gviz_api
+from werkzeug.security import check_password_hash
 
-from app import app
+from app import app, auth
+from config import users
+
+@auth.verify_password
+def verify_password(username, password):
+    if username in users and check_password_hash(users.get(username), password):
+        return username
 
 @app.route('/')
+@auth.login_required
 def index():
     conn = sqlite3.connect('energy.db')
     cur = conn.cursor()
