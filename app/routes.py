@@ -124,19 +124,35 @@ def index():
 
 @app.route('/data-upload', methods=['POST'])
 def get_data():
-    try:
-        r = request.get_json()
-        df = pd.read_json(r, convert_dates=False)
-        df.set_index('timestamp', inplace=True)
-        conn = sqlite3.connect('energy.db')
-        df.to_sql('temp_table', con=conn, if_exists='replace')
-        c = conn.cursor()
-        c.execute('REPLACE INTO energy SELECT * FROM temp_table')
-        conn.commit()
-        conn.close()
-        return 'Data upload request successful', 200
-    except Exception as e:
-        return str(e), 400
+    auth = request.authorization
+    if not auth or not verify_password(auth.username, auth.password):
+        try:
+            r = request.get_json()
+            df = pd.read_json(r, convert_dates=False)
+            df.set_index('timestamp', inplace=True)
+            conn = sqlite3.connect('energy.db')
+            df.to_sql('temp_table', con=conn, if_exists='replace')
+            c = conn.cursor()
+            c.execute('REPLACE INTO energy SELECT * FROM temp_table')
+            conn.commit()
+            conn.close()
+            return 'Authenticated - Data upload request successful', 200
+        except Exception as e:
+            return str(e), 400
+    else:
+        try:
+            r = request.get_json()
+            df = pd.read_json(r, convert_dates=False)
+            df.set_index('timestamp', inplace=True)
+            conn = sqlite3.connect('energy.db')
+            df.to_sql('temp_table', con=conn, if_exists='replace')
+            c = conn.cursor()
+            c.execute('REPLACE INTO energy SELECT * FROM temp_table')
+            conn.commit()
+            conn.close()
+            return 'Not Authenticated - Data upload request successful', 200
+        except Exception as e:
+            return str(e), 400
 
 @app.route('/kW-upload', methods=['POST'])
 def get_kW():

@@ -3,4 +3,3 @@ venv
 **/__pycache__/
 energy.db
 energy-old.db
-config.py
