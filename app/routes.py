@@ -156,14 +156,28 @@ def get_data():
 
 @app.route('/kW-upload', methods=['POST'])
 def get_kW():
-    try:
-        kW = request.form['kW']
-        id = 1
-        conn = sqlite3.connect('energy.db')
-        c = conn.cursor()
-        c.execute(f'REPLACE INTO kW (id, kW) VALUES ({id}, {kW})')
-        conn.commit()
-        conn.close()
-        return 'kW upload request successful', 200
-    except Exception as e:
-        return str(e), 400 
+    auth = request.authorization
+    if not auth or not verify_password(auth.username, auth.password):
+        try:
+            kW = request.form['kW']
+            id = 1
+            conn = sqlite3.connect('energy.db')
+            c = conn.cursor()
+            c.execute(f'REPLACE INTO kW (id, kW) VALUES ({id}, {kW})')
+            conn.commit()
+            conn.close()
+            return 'Not Authenticated - kW upload request successful', 200
+        except Exception as e:
+            return str(e), 400 
+    else:
+        try:
+            kW = request.form['kW']
+            id = 1
+            conn = sqlite3.connect('energy.db')
+            c = conn.cursor()
+            c.execute(f'REPLACE INTO kW (id, kW) VALUES ({id}, {kW})')
+            conn.commit()
+            conn.close()
+            return 'Authenticated - kW upload request successful', 200
+        except Exception as e:
+            return str(e), 400
