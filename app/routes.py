@@ -136,7 +136,7 @@ def get_data():
             c.execute('REPLACE INTO energy SELECT * FROM temp_table')
             conn.commit()
             conn.close()
-            return 'Authenticated - Data upload request successful', 200
+            return 'Not Authenticated - Data upload request successful', 200
         except Exception as e:
             return str(e), 400
     else:
@@ -150,7 +150,7 @@ def get_data():
             c.execute('REPLACE INTO energy SELECT * FROM temp_table')
             conn.commit()
             conn.close()
-            return 'Not Authenticated - Data upload request successful', 200
+            return 'Authenticated! - Data upload request successful', 200
         except Exception as e:
             return str(e), 400
 
