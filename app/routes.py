@@ -16,10 +16,13 @@ def verify_password(username, password):
 @app.route('/')
 @auth.login_required
 def index():
+    # connect to db
     conn = sqlite3.connect('energy.db')
     cur = conn.cursor()
+    # dynamically create queries for various time periods
     query_dict = {}
     total_query_dict = {}
+    # periods with length of period in days and granularity in minutes
     days_dict = {'day': [1, 5],
                  'week': [7, 60],
                  'month': [30, 1440],
@@ -33,8 +36,9 @@ def index():
             FROM (
                 SELECT 
                   DATETIME(
-                      STRFTIME("%s", timestamp) - (STRFTIME("%s", timestamp) % ({period_list[1]} * 60)), 
-                      "unixepoch"
+                      STRFTIME("%s", timestamp) - (
+                          STRFTIME("%s", timestamp) % ({period_list[1]} * 60)
+                      ), "unixepoch"
                   ) AS timestamp_floor,
                   kWh,
                   carbon
@@ -61,6 +65,7 @@ def index():
                 ) <= {period_list[0]}
         '''
     
+    # prepare data by creating data tables for google charts
     graph_df_dict ={}
     totals_dict  ={}
     data_table_dict = {}
@@ -80,7 +85,8 @@ def index():
         data_table_dict[period] = gviz_api.DataTable(description)
         data_table_dict[period].LoadData(graph_df_dict[period].values)
         json_dict[period] = data_table_dict[period].ToJSon()
-     
+
+    # take last carbon intensity to display below graph 
     carbon_query = '''
         SELECT 
           carbon_intensity,
@@ -100,7 +106,7 @@ def index():
         kw_query = '''
             SELECT kW
             FROM kW
-            WHERE id=1
+            WHERE id = 1
         '''
         kW = cur.execute(kw_query).fetchone()[0]
     except:
@@ -122,11 +128,13 @@ def index():
 
 @app.route('/data-upload', methods=['POST'])
 def get_data():
+    # authenticate request
     auth = request.authorization
     if not auth or not verify_password(auth.username, auth.password):
             return 'Bad request - authentication failed', 400
     else:
         try:
+            # insert data into db where it doesn't exist already
             r = request.get_json()
             df = pd.read_json(r, convert_dates=False)
             df.set_index('timestamp', inplace=True)
@@ -142,11 +150,14 @@ def get_data():
 
 @app.route('/kW-upload', methods=['POST'])
 def get_kW():
+    # authenticate request
     auth = request.authorization
     if not auth or not verify_password(auth.username, auth.password):
         return 'Bad request - authentication failed', 400
     else:
         try:
+            # store current kW in separate table, 
+            # updated more frequently than rest of data
             kW = request.form['kW']
             id = 1
             conn = sqlite3.connect('energy.db')
