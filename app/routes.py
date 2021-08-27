@@ -1,6 +1,4 @@
 import sqlite3
-import datetime
-import pickle
 
 import pandas as pd
 from flask import render_template, request
@@ -126,19 +124,7 @@ def index():
 def get_data():
     auth = request.authorization
     if not auth or not verify_password(auth.username, auth.password):
-        try:
-            r = request.get_json()
-            df = pd.read_json(r, convert_dates=False)
-            df.set_index('timestamp', inplace=True)
-            conn = sqlite3.connect('energy.db')
-            df.to_sql('temp_table', con=conn, if_exists='replace')
-            c = conn.cursor()
-            c.execute('REPLACE INTO energy SELECT * FROM temp_table')
-            conn.commit()
-            conn.close()
-            return 'Not Authenticated - Data upload request successful', 200
-        except Exception as e:
-            return str(e), 400
+            return 'Bad request - authentication failed', 400
     else:
         try:
             r = request.get_json()
@@ -158,17 +144,7 @@ def get_data():
 def get_kW():
     auth = request.authorization
     if not auth or not verify_password(auth.username, auth.password):
-        try:
-            kW = request.form['kW']
-            id = 1
-            conn = sqlite3.connect('energy.db')
-            c = conn.cursor()
-            c.execute(f'REPLACE INTO kW (id, kW) VALUES ({id}, {kW})')
-            conn.commit()
-            conn.close()
-            return 'Not Authenticated - kW upload request successful', 200
-        except Exception as e:
-            return str(e), 400 
+        return 'Bad request - authentication failed', 400
     else:
         try:
             kW = request.form['kW']
